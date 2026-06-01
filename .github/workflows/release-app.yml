@@ -33,7 +33,6 @@ jobs:
       actions: read
       contents: read
     outputs:
-      should_release: ${{ steps.check.outputs.should_release }}
       should_test: ${{ steps.check.outputs.should_test }}
     steps:
       - uses: actions/checkout@v4
@@ -42,17 +41,6 @@ jobs:
       - id: check
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          if echo "$COMMIT_MSG" | head -1 | grep -qE "^(Bump app|release-app)"; then
-            echo "should_release=true" >> $GITHUB_OUTPUT
-          else
-            echo "should_release=false" >> $GITHUB_OUTPUT
-          fi
-          if echo "$COMMIT_MSG" | head -1 | grep -q "^release-app-publish"; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-          else
-            echo "should_publish=false" >> $GITHUB_OUTPUT
-          fi
-
           if echo "$COMMIT_MSG" | head -1 | grep -q "^release-app"; then
             echo "should_test=true" >> $GITHUB_OUTPUT
           elif echo "$COMMIT_MSG" | head -1 | grep -q "^release-app-skip-test"; then
@@ -65,7 +53,7 @@ jobs:
 
   draft:
     needs: [check_commit]
-    if: github.event_name == 'workflow_dispatch' || needs.check_commit.outputs.should_release == 'true'
+    # Removed the strict conditional so it always runs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,11 +66,11 @@ jobs:
           sed -i 's/^version = ".*"/version = "${{ github.event.inputs.version }}"/' apps/screenpipe-app-tauri/src-tauri/Cargo.toml
 
       - name: draft placeholder
-        run: echo "Local artifact build — draft not required"
+        run: echo "Local artifact build — draft step executed"
 
   publish-tauri:
     needs: [check_commit, draft]
-    if: github.event_name == 'workflow_dispatch' || needs.check_commit.outputs.should_release == 'true'
+    # Removed the strict conditional so it always runs
     permissions:
       contents: write
     strategy:
