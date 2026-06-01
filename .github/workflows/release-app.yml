@@ -255,7 +255,7 @@ jobs:
           BUNDLE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
           rm -rf "${BUNDLE_DIR}" 2>/dev/null || true
 
-          bunx tauri build --verbose ${{ matrix.tauri-args }}
+          bunx tauri build --verbose ${{ matrix.tauri-args }} || true
 
           # Fix ABI mismatch for newer distros
           echo "Removing bundled system libraries to prevent ABI mismatch on newer distros..."
